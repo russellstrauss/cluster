@@ -36,7 +36,7 @@ module.exports = function() {
 	let interps = [d3.interpolateRainbow, d3.interpolateRgb('#450F66', '#B36002'), d3.interpolateRgb('white', 'red'), d3.interpolateSinebow, d3.interpolateYlOrRd, d3.interpolateYlGnBu,d3.interpolateRdPu, d3.interpolatePuBu, d3.interpolateGnBu, d3.interpolateBuPu, d3.interpolateCubehelixDefault, d3.interpolateCool, d3.interpolateWarm, d3.interpolateCividis, d3.interpolatePlasma, d3.interpolateMagma, d3.interpolateInferno, d3.interpolateViridis, d3.interpolateTurbo, d3.interpolatePurples, d3.interpolateReds, d3.interpolateOranges, d3.interpolateGreys, d3.interpolateGreens, d3.interpolateBlues, d3.interpolateSpectral, d3.interpolateRdYlBu, d3.interpolateRdBu, d3.interpolatePuOr, d3.interpolatePiYG, d3.interpolatePRGn]
 	let colorSchemes = [d3.schemeCategory10, d3.schemeAccent, d3.schemeDark2, d3.schemePaired, d3.schemePastel1, d3.schemePastel2, d3.schemeSet1, d3.schemeSet2, d3.schemeSet3, d3.schemeTableau10];
 	
-	let curve = []; let progress = 0; let camera_speed = 2; let curve_index = 0;
+	let curve = [], progress = 0, camera_speed = .01, trajectory_iteration_count = 4000, radius_scale = 500, curve_index = 0, clock, dt;
 	
 	let cameraFocalPoint = new THREE.Vector3(0, 0, 0);
 	
@@ -61,7 +61,8 @@ module.exports = function() {
 			gfx.setCameraLocation(camera, settings.defaultCameraLocation);
 			self.addStars();
 			self.addCluster();
-			self.createCurve();
+			clock = new THREE.Clock();
+			self.createCameraTrajectory();
 			self.setUpButtons();
 			// self.addVertexColors();
 			self.firstFrame();
@@ -84,13 +85,13 @@ module.exports = function() {
 			
 			if (!initialized) self.firstFrame();
 			// camera trajectory
-			// this.updateCamera();
+			this.updateCamera();
 			if (clusterGeometry) {
 				
 				for (let i = 0; i < clusterGeometry.vertices.length; i++) {
 					
-					let min = -1.5;
-					let max =  1.5;
+					let min = -2.5;
+					let max =  2.5;
 					
 					let x = Math.random() * (max - min) + min, y = Math.random() * (max - min) + min, z = Math.random() * (max - min) + min;
 					clusterGeometry.vertices[i].set(clusterGeometry.vertices[i].x + x, clusterGeometry.vertices[i].y + y, clusterGeometry.vertices[i].z + z);
@@ -101,31 +102,38 @@ module.exports = function() {
 		},
 		
 		updateCamera: function() {
-			let clock = new THREE.Clock();
-			let dt = clock.getDelta();
+			dt = clock.getDelta();
 			clock.start();
-			camera.position.set(curve[progress].x, curve[progress].y, curve[progress].z);
-			progress++;
+			
+			let curveIndex = Math.round(trajectory_iteration_count * progress);
+			
+			camera.position.set(curve[curveIndex].x, curve[curveIndex].y, curve[curveIndex].z);
+			camera.lookAt(cameraFocalPoint);
+			progress += dt * camera_speed;
+			if (progress > (1-(dt * camera_speed))) progress = 0;
 		},
 		
-		createCurve: function() {
+		createCameraTrajectory: function() {
 			
-			let iteration_count = 10001; let step_delta = 0.001; let curve_length = step_delta * iteration_count; let radius_scale = 1; let a = .05; let k = .9; let height_scale = 9; let lower_bound = 1;
-			let prevPt = new THREE.Vector3(0, 0, 0);
+			let curve_length = trajectory_iteration_count;
+			let prevPt = null;
 			
-			for (let i = 0; i < curve_length; i += step_delta) {
+			for (let i = 0; i < curve_length; i += 2 * Math.PI / trajectory_iteration_count) {
 				
 				// # Calculate curve point position
-				let spiral_x = radius_scale * a * Math.pow(Math.E, k * i) * Math.cos(i);
-				let spiral_y = height_scale * height_scale * Math.log(i, Math.E) + lower_bound;
-				let spiral_z = radius_scale * a * Math.pow(Math.E, k * i) * Math.sin(i);
+				let spiral_x = radius_scale * Math.cos(i);
+				let spiral_y = 1000;
+				let spiral_z = radius_scale * Math.sin(i);
 				let spiralPt = new THREE.Vector3(spiral_x, spiral_y, spiral_z);
 				
-				let showLine = false;
-				if (showLine === true) gfx.drawLineFromPoints(prevPt, spiralPt);
-				
+				if (prevPt !== null) {
+					
+					let showLine = false;
+					if (showLine === true && prevPt != new THREE.Vector3(0, 0, 0)) gfx.drawLineFromPoints(prevPt, spiralPt);
+					
+					curve.push(spiralPt);
+				}
 				prevPt = spiralPt
-				curve.push(spiralPt);
 			}
 			curve.reverse();
 		},

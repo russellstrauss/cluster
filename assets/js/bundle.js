@@ -43,10 +43,14 @@ module.exports = function () {
   var stats = new Stats();
   var interps = [d3.interpolateRainbow, d3.interpolateRgb('#450F66', '#B36002'), d3.interpolateRgb('white', 'red'), d3.interpolateSinebow, d3.interpolateYlOrRd, d3.interpolateYlGnBu, d3.interpolateRdPu, d3.interpolatePuBu, d3.interpolateGnBu, d3.interpolateBuPu, d3.interpolateCubehelixDefault, d3.interpolateCool, d3.interpolateWarm, d3.interpolateCividis, d3.interpolatePlasma, d3.interpolateMagma, d3.interpolateInferno, d3.interpolateViridis, d3.interpolateTurbo, d3.interpolatePurples, d3.interpolateReds, d3.interpolateOranges, d3.interpolateGreys, d3.interpolateGreens, d3.interpolateBlues, d3.interpolateSpectral, d3.interpolateRdYlBu, d3.interpolateRdBu, d3.interpolatePuOr, d3.interpolatePiYG, d3.interpolatePRGn];
   var colorSchemes = [d3.schemeCategory10, d3.schemeAccent, d3.schemeDark2, d3.schemePaired, d3.schemePastel1, d3.schemePastel2, d3.schemeSet1, d3.schemeSet2, d3.schemeSet3, d3.schemeTableau10];
-  var curve = [];
-  var progress = 0;
-  var camera_speed = 2;
-  var curve_index = 0;
+  var curve = [],
+      progress = 0,
+      camera_speed = .01,
+      trajectory_iteration_count = 4000,
+      radius_scale = 500,
+      curve_index = 0,
+      clock,
+      dt;
   var cameraFocalPoint = new THREE.Vector3(0, 0, 0);
   return {
     init: function init() {
@@ -66,7 +70,8 @@ module.exports = function () {
       gfx.setCameraLocation(camera, settings.defaultCameraLocation);
       self.addStars();
       self.addCluster();
-      self.createCurve();
+      clock = new THREE.Clock();
+      self.createCameraTrajectory();
       self.setUpButtons(); // self.addVertexColors();
 
       self.firstFrame();
@@ -86,12 +91,13 @@ module.exports = function () {
     everyFrame: function everyFrame() {
       var self = this;
       if (!initialized) self.firstFrame(); // camera trajectory
-      // this.updateCamera();
+
+      this.updateCamera();
 
       if (clusterGeometry) {
         for (var i = 0; i < clusterGeometry.vertices.length; i++) {
-          var min = -1.5;
-          var max = 1.5;
+          var min = -2.5;
+          var max = 2.5;
           var x = Math.random() * (max - min) + min,
               y = Math.random() * (max - min) + min,
               z = Math.random() * (max - min) + min;
@@ -104,33 +110,32 @@ module.exports = function () {
       frameCount++;
     },
     updateCamera: function updateCamera() {
-      var clock = new THREE.Clock();
-      var dt = clock.getDelta();
+      dt = clock.getDelta();
       clock.start();
-      camera.position.set(curve[progress].x, curve[progress].y, curve[progress].z);
-      progress++;
+      var curveIndex = Math.round(trajectory_iteration_count * progress);
+      camera.position.set(curve[curveIndex].x, curve[curveIndex].y, curve[curveIndex].z);
+      camera.lookAt(cameraFocalPoint);
+      progress += dt * camera_speed;
+      if (progress > 1 - dt * camera_speed) progress = 0;
     },
-    createCurve: function createCurve() {
-      var iteration_count = 10001;
-      var step_delta = 0.001;
-      var curve_length = step_delta * iteration_count;
-      var radius_scale = 1;
-      var a = .05;
-      var k = .9;
-      var height_scale = 9;
-      var lower_bound = 1;
-      var prevPt = new THREE.Vector3(0, 0, 0);
+    createCameraTrajectory: function createCameraTrajectory() {
+      var curve_length = trajectory_iteration_count;
+      var prevPt = null;
 
-      for (var i = 0; i < curve_length; i += step_delta) {
+      for (var i = 0; i < curve_length; i += 2 * Math.PI / trajectory_iteration_count) {
         // # Calculate curve point position
-        var spiral_x = radius_scale * a * Math.pow(Math.E, k * i) * Math.cos(i);
-        var spiral_y = height_scale * height_scale * Math.log(i, Math.E) + lower_bound;
-        var spiral_z = radius_scale * a * Math.pow(Math.E, k * i) * Math.sin(i);
+        var spiral_x = radius_scale * Math.cos(i);
+        var spiral_y = 1000;
+        var spiral_z = radius_scale * Math.sin(i);
         var spiralPt = new THREE.Vector3(spiral_x, spiral_y, spiral_z);
-        var showLine = false;
-        if (showLine === true) gfx.drawLineFromPoints(prevPt, spiralPt);
+
+        if (prevPt !== null) {
+          var showLine = false;
+          if (showLine === true && prevPt != new THREE.Vector3(0, 0, 0)) gfx.drawLineFromPoints(prevPt, spiralPt);
+          curve.push(spiralPt);
+        }
+
         prevPt = spiralPt;
-        curve.push(spiralPt);
       }
 
       curve.reverse();
@@ -740,8 +745,8 @@ var _require = require("three"),
         controls.zoomSpeed = 2;
         controls.enablePan = !utils.mobile();
         controls.panSpeed = 1.5;
-        controls.minDistance = 10;
-        controls.maxDistance = 800;
+        controls.minDistance = 0;
+        controls.maxDistance = 3000;
         controls.maxPolarAngle = Math.PI / 2;
         return controls;
       },

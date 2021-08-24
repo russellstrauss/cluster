@@ -364,8 +364,8 @@ const { Vector3 } = require("three");
 				controls.zoomSpeed = 2;
 				controls.enablePan = !utils.mobile();
 				controls.panSpeed = 1.5;
-				controls.minDistance = 10;
-				controls.maxDistance = 800;
+				controls.minDistance = 0;
+				controls.maxDistance = 3000;
 				controls.maxPolarAngle = Math.PI / 2;
 				return controls;
 			},
