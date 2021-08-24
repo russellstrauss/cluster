@@ -45,12 +45,14 @@ module.exports = function () {
   var colorSchemes = [d3.schemeCategory10, d3.schemeAccent, d3.schemeDark2, d3.schemePaired, d3.schemePastel1, d3.schemePastel2, d3.schemeSet1, d3.schemeSet2, d3.schemeSet3, d3.schemeTableau10];
   var curve = [],
       progress = 0,
-      camera_speed = .01,
-      trajectory_iteration_count = 4000,
-      radius_scale = 500,
+      camera_speed = .0005,
+      trajectory_iteration_count = 100,
+      radius_scale = 50000,
       curve_index = 0,
       clock,
-      dt;
+      dt,
+      curveObject,
+      catmullRomCurve;
   var cameraFocalPoint = new THREE.Vector3(0, 0, 0);
   return {
     init: function init() {
@@ -92,12 +94,12 @@ module.exports = function () {
       var self = this;
       if (!initialized) self.firstFrame(); // camera trajectory
 
-      this.updateCamera();
+      this.updateCamera2();
 
       if (clusterGeometry) {
         for (var i = 0; i < clusterGeometry.vertices.length; i++) {
-          var min = -2.5;
-          var max = 2.5;
+          var min = -5;
+          var max = 5;
           var x = Math.random() * (max - min) + min,
               y = Math.random() * (max - min) + min,
               z = Math.random() * (max - min) + min;
@@ -124,9 +126,11 @@ module.exports = function () {
 
       for (var i = 0; i < curve_length; i += 2 * Math.PI / trajectory_iteration_count) {
         // # Calculate curve point position
-        var spiral_x = radius_scale * Math.cos(i);
+        var a = .01;
+        var k = .01;
+        var spiral_x = radius_scale * a * Math.pow(Math.E, k * i) * Math.cos(i);
         var spiral_y = 1000;
-        var spiral_z = radius_scale * Math.sin(i);
+        var spiral_z = radius_scale * a * Math.pow(Math.E, k * i) * Math.sin(i);
         var spiralPt = new THREE.Vector3(spiral_x, spiral_y, spiral_z);
 
         if (prevPt !== null) {
@@ -139,6 +143,28 @@ module.exports = function () {
       }
 
       curve.reverse();
+      this.catmullRomSpline(curve);
+    },
+    catmullRomSpline: function catmullRomSpline(curveArray) {
+      //Create a closed wavey loop
+      catmullRomCurve = new THREE.CatmullRomCurve3(curveArray);
+      var points = catmullRomCurve.getPoints(1000);
+      var geometry = new THREE.BufferGeometry().setFromPoints(points);
+      var material = new THREE.LineBasicMaterial({
+        color: 0xff0000
+      }); // Create the final object to add to the scene
+
+      curveObject = new THREE.Line(geometry, material);
+      scene.add(curveObject);
+    },
+    updateCamera2: function updateCamera2() {
+      dt = clock.getDelta();
+      clock.start();
+      var cameraPosition = catmullRomCurve.getPointAt(progress);
+      camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+      camera.lookAt(cameraFocalPoint);
+      progress += dt * camera_speed;
+      if (progress > 1 - dt * camera_speed) progress = 0;
     },
     addStars: function addStars() {
       var geometry = new THREE.BufferGeometry();
@@ -170,7 +196,7 @@ module.exports = function () {
 
       var color1 = new THREE.Color(0, 0, 1);
       var color2 = new THREE.Color(1, 1, 0);
-      var colors = self.interpolateD3Colors(clusterGeometry, color1, color2, d3.interpolateYlGnBu, true);
+      var colors = self.interpolateD3Colors(clusterGeometry, color1, color2, interps[3], true);
       var particles = new THREE.Points(clusterGeometry, new THREE.PointsMaterial({
         vertexColors: THREE.VertexColors,
         size: 1
