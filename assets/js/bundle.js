@@ -15,16 +15,17 @@ module.exports = function () {
       y: 500,
       z: 500
     },
-    messageDuration: 2000,
     colors: {
-      worldColor: new THREE.Color('#000'),
-      gridColor: new THREE.Color('#111')
+      worldColor: new THREE.Color('#000')
     },
-    gridSize: 100,
     axes: {
       color: 0xffffff,
       count: 20,
       tickLength: 1
+    },
+    iOS: {
+      particleSize: 8,
+      starSize: 3
     }
   };
   var geometry;
@@ -166,9 +167,12 @@ module.exports = function () {
         vertices.push(THREE.MathUtils.randFloatSpread(4000)); // z
       }
 
+      var size = 1;
+      if (utils.iOS() == true) size = settings.iOS.starSize;
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
       var particles = new THREE.Points(geometry, new THREE.PointsMaterial({
-        color: 0x888888
+        color: 0x888888,
+        size: size
       }));
       scene.add(particles);
     },
@@ -185,9 +189,11 @@ module.exports = function () {
       var color1 = new THREE.Color(0, 0, 1);
       var color2 = new THREE.Color(1, 1, 0);
       var colors = self.interpolateD3Colors(clusterGeometry, color1, color2, interps[3], true);
+      var size = 1;
+      if (utils.iOS() == true) size = settings.iOS.particleSize;
       var particles = new THREE.Points(clusterGeometry, new THREE.PointsMaterial({
         vertexColors: THREE.VertexColors,
-        size: 1
+        size: size
       }));
       scene.add(particles);
     },
@@ -234,55 +240,7 @@ module.exports = function () {
     rgbStringToColor: function rgbStringToColor(rgbString) {
       rgbString = rgbString.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
       return new THREE.Color(rgbString[0] / 255, rgbString[1] / 255, rgbString[2] / 255);
-    } //,
-    // startMusic: function() {
-    // 	// console.log(Howler);
-    // 	var sound = new Howl({
-    // 		src: ['assets/audio/vogelsinger.webm', 'assets/audio/vogelsinger.mp3'],
-    // 		html5: false,
-    // 		autoplay: true,
-    // 		loop: true,
-    // 		preload: true,
-    // 		volume: .5
-    // 	});
-    // 	StartAudioContext(Howler.ctx, "body");
-    // 	sound.play();
-    // 	this.forceMusicStart(sound);
-    // 	if (sound._state == "loaded") this.forceMusicStart();
-    // 	document.addEventListener('click', () => {
-    // 		sound = new Howl({
-    // 			src: ['assets/audio/vogelsinger.webm', 'assets/audio/vogelsinger.mp3'],
-    // 			html5: false,
-    // 			autoplay: true,
-    // 			loop: true,
-    // 			preload: true,
-    // 			volume: .5
-    // 		});
-    // 		this.forceMusicStart(sound);
-    // 		StartAudioContext(Howler.ctx);
-    // 		Howler.volume(1);
-    // 		Howler.ctx.resume();
-    // 		sound.play();
-    // 		console.log(sound.playing())
-    // 		console.log(Howler.ctx);
-    // 	});
-    // },
-    // forceMusicStart: function(sound) {
-    // 	let timer = setInterval(function() { // Browsers are really bitchy about autoplay, so set up an interval to repeatedly start play until it actually does
-    // 		sound = new Howl({
-    // 			src: ['assets/audio/vogelsinger.webm', 'assets/audio/vogelsinger.mp3'],
-    // 			html5: false,
-    // 			autoplay: true,
-    // 			loop: true,
-    // 			preload: true,
-    // 			volume: .5
-    // 		});
-    // 		sound.stop();
-    // 		sound.play();
-    // 		clearInterval(timer);
-    // 	 }, 50);
-    // }
-
+    }
   };
 };
 
@@ -900,6 +858,10 @@ var Graphics = require('./graphics.js');
           return element === currentItem;
         });
         return array[(itemIndex + 1) % array.length];
+      },
+      iOS: function iOS() {
+        return ['iPad Simulator', 'iPhone Simulator', 'iPod Simulator', 'iPad', 'iPhone', 'iPod'].includes(navigator.platform) // iPad on iOS 13 detection
+        || navigator.userAgent.includes("Mac") && "ontouchend" in document;
       }
     };
   }();
