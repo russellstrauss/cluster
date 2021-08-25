@@ -66,6 +66,7 @@ module.exports = function() {
 			self.setUpButtons();
 			// self.addVertexColors();
 			self.firstFrame();
+			self.startMusic();
 			
 			var animate = function(now) {
 				requestAnimationFrame(animate);
@@ -437,6 +438,19 @@ module.exports = function() {
 		
 		ramp: function(color, index, total) { // pass a color interpolator or array of colors. will return a color based on percentage index / total
 			return color(index / (total - 1));
+		},
+		
+		startMusic: function() {
+			
+			var sound = new Howl({
+				src: ['assets/audio/vogelsinger.webm'],
+				autoplay: true,
+				loop: true,
+				preload: true,
+				volume: .5
+			});
+			
+			console.log(sound);
 		}
 	}
 }
