@@ -1,9 +1,9 @@
 const { Vector3, Clock, MathUtils } = require('three');
+// var StartAudioContext = require('startaudiocontext');
+// var howler = require('howler');
 
 module.exports = function() {
-	
-	let message = document.querySelector('.message');
-	var pastData;
+
 	var settings = {
 		defaultCameraLocation: {
 			x: 500,
@@ -63,7 +63,7 @@ module.exports = function() {
 			clock = new THREE.Clock();
 			self.createCameraTrajectory();
 			self.firstFrame();
-			self.startMusic();
+			// self.startMusic();
 			
 			var animate = function(now) {
 				requestAnimationFrame(animate);
@@ -237,25 +237,62 @@ module.exports = function() {
 		rgbStringToColor: function(rgbString) {
 			rgbString = rgbString.replace('rgb(','').replace(')','').replace(' ','').split(',');
 			return new THREE.Color(rgbString[0]/255, rgbString[1]/255, rgbString[2]/255);
-		},
+		}//,
 		
-		startMusic: function() {
+		// startMusic: function() {
 			
-			var sound = new Howl({
-				src: ['assets/audio/vogelsinger.webm'],
-				autoplay: true,
-				loop: true,
-				preload: true,
-				volume: .5
-			});
+		// 	// console.log(Howler);
 			
-			let timer = setInterval(function() { // Browsers are really bitchy about autoplay, so set up an interval to repeatedly start play until it actually does
+		// 	var sound = new Howl({
+		// 		src: ['assets/audio/vogelsinger.webm', 'assets/audio/vogelsinger.mp3'],
+		// 		html5: false,
+		// 		autoplay: true,
+		// 		loop: true,
+		// 		preload: true,
+		// 		volume: .5
+		// 	});
+		// 	StartAudioContext(Howler.ctx, "body");
+		// 	sound.play();
+			
+		// 	this.forceMusicStart(sound);
+			
+		// 	if (sound._state == "loaded") this.forceMusicStart();
+		// 	document.addEventListener('click', () => {
+		// 		sound = new Howl({
+		// 			src: ['assets/audio/vogelsinger.webm', 'assets/audio/vogelsinger.mp3'],
+		// 			html5: false,
+		// 			autoplay: true,
+		// 			loop: true,
+		// 			preload: true,
+		// 			volume: .5
+		// 		});
+		// 		this.forceMusicStart(sound);
+		// 		StartAudioContext(Howler.ctx);
+		// 		Howler.volume(1);
+		// 		Howler.ctx.resume();
+		// 		sound.play();
 				
-				if (sound._state == "loaded") {
-					sound.play();
-					clearInterval(timer);
-				}
-			 }, 50);
-		}
+		// 		console.log(sound.playing())
+		// 		console.log(Howler.ctx);
+		// 	});
+		// },
+		
+		// forceMusicStart: function(sound) {
+		// 	let timer = setInterval(function() { // Browsers are really bitchy about autoplay, so set up an interval to repeatedly start play until it actually does
+				
+		// 		sound = new Howl({
+		// 			src: ['assets/audio/vogelsinger.webm', 'assets/audio/vogelsinger.mp3'],
+		// 			html5: false,
+		// 			autoplay: true,
+		// 			loop: true,
+		// 			preload: true,
+		// 			volume: .5
+		// 		});
+				
+		// 		sound.stop();
+		// 		sound.play();
+		// 		clearInterval(timer);
+		// 	 }, 50);
+		// }
 	}
 }

@@ -2,90 +2,29 @@ $textColor: #ccc;
 $legendTextColor: #ccc;
 $textBackground: rgba(255, 255, 255, .1);
 
-.message {
-	font-size: 22px;
+.sound-controls	{
 	position: absolute;
-	left: 50%;
-	top: 20px;
-	transform: translateX(-50%);
-	
-	color: red;
-	font-size: 2rem;
-}
-
-#legend {
-	width: 200px;
-	font-size: 12px;
-	position: absolute;
-	bottom: 20px;
-	left: 20px;
-	color: $textColor;
-	opacity: .5;
-	
-	.legend-title {
-		font-size: 18px;
-	}
-	
-	.backdrop {
-		color: $legendTextColor;
-		border: 1px solid $textColor;
-		//background-color: rgba(255, 255, 255, .4);
-		background-color: $textBackground;
-		padding: 5px;
-		margin-top: 5px;
-	}
-	
-	table {
-		width: 100%;
-		
-		thead {
-			
-			tr {
-				font-weight: bold;
-				
-				&.divider {
-					vertical-align: top;
-				}
-			}
-		}
-		
-		tr {
-			
-			&.divider {
-				height: 25px;
-				vertical-align: bottom;
-			}
-			
-			td {
-				width: 50%;
-				
-				&:last-of-type {
-					text-align: right;
-				}
-			}
-		}
-	}
-}
-
-#author {
-	position: absolute;
+	width: 50px;
+	height: 50px;
 	right: 20px;
-	top: 20px;
-	display: flex;
-	font-size: 12px;
-	color: $textColor;
+	bottom: 20px;
 	
-	.column {
+	.enable {
+		fill: white;
+		display: none;
+		cursor: pointer;
 		
-		&.description {
-			text-align: right;
-			padding-right: 10px;
+		&.active {
+			display: block;
 		}
+	}
+	
+	.disable {
+		display: none;
+		cursor: pointer;
 		
-		#portrait {
-			display: flex;
-			border: 1px solid $textColor;
-			width: 100px;
+		&.active {
+			display: block;
 		}
 	}
 }
