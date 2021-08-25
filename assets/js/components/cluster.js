@@ -44,7 +44,7 @@ module.exports = function() {
 		
 		init: function() {
 			let self = this;
-			self.loadFont();
+			self.begin();
 		},
 		
 		begin: function() {
@@ -54,7 +54,6 @@ module.exports = function() {
 			renderer = gfx.setUpRenderer(renderer);
 			camera = gfx.setUpCamera(camera);
 			scene.background = settings.colors.worldColor;
-			// floor = self.addGrid(settings.gridSize, settings.colors.worldColor, settings.colors.gridColor);
 			controls = gfx.enableControls(controls, renderer, camera);
 			gfx.resizeRendererOnWindowResize(renderer, camera);
 			gfx.setUpLights();
@@ -63,8 +62,6 @@ module.exports = function() {
 			self.addCluster();
 			clock = new THREE.Clock();
 			self.createCameraTrajectory();
-			self.setUpButtons();
-			// self.addVertexColors();
 			self.firstFrame();
 			self.startMusic();
 			
@@ -221,128 +218,6 @@ module.exports = function() {
 			});
 		},
 		
-		setUpButtons: function() {
-			let self = this;
-			let message = document.getElementById('message');
-			document.addEventListener('keyup', function(event) {
-				
-				let one = 49;
-				let two = 50;
-				let three = 51;
-				let four = 52;
-				let r = 82;
-				let space = 32;
-				let a = 65;
-				
-				if (event.keyCode === one) {
-					self.reset();
-				}
-				if (event.keyCode === two) {
-					self.reset();
-				}
-				if (event.keyCode === three) {
-					self.reset();
-				}
-				if (event.keyCode === four) {
-					self.reset();
-				}
-				if (event.keyCode === r) {
-					self.reset();
-				}
-				if (event.keyCode === space) {
-					console.log(camera);
-				}
-				if (event.keyCode === a) {
-					gfx.toggleAxesHelper();
-				}
-			});
-		},
-		
-		addVertexColors: function() {
-			
-			let self = this;
-			let loader = new THREE.OBJLoader();
-			let file = './assets/obj/bunny.obj';
-			loader.load(file,
-				function (obj) { // loaded
-					
-					geometry = obj.children[0].geometry;
-					let material = new THREE.PointsMaterial({
-						size: 1.25, 
-						vertexColors: THREE.VertexColors
-					});
-					let mesh = new THREE.Points(geometry, material);
-					let colors = [];
-					let color1 = new THREE.Color(0, 0, 1);
-					let color2 = new THREE.Color(1, 1, 0);
-					
-					switch (file) {
-						case './assets/obj/teapot.obj':
-							mesh.scale.set(15, 15, 15);
-							// colors = self.interpolateColors(geometry, color1, color2);
-							colors = self.interpolateD3Colors(geometry, color1, color2, d3.interpolateRgb('blue', 'red'), true);
-							// colors = self.d3Stripes(geometry, colorSchemes[9]);
-							break;
-						case './assets/obj/bunny.obj':
-							mesh.scale.set(500, 500, 500);
-							mesh.position.y -= 16.5; mesh.position.x += 10;
-							colors = self.interpolateD3Colors(geometry, color1, color2, d3.interpolateYlGnBu, true);
-							// colors = self.interpolateD3Colors(geometry, color1, color2, d3.interpolateRgb('#24333A', '#E7582E'), true);
-							// colors = self.d3Stripes(geometry, colorSchemes[1]);
-							break;
-						case './assets/obj/chicken.obj':
-							mesh.scale.set(2.5, 2.5, 2.5);
-							colors = self.interpolateD3Colors(geometry, color1, color2, d3.interpolateSinebow, true);
-							// colors = self.d3Stripes(geometry, colorSchemes[1]);
-							break;
-						case './assets/obj/box.obj':
-							mesh.scale.set(50, 50, 50);
-							colors = self.interpolateD3Colors(geometry, color1, color2, d3.interpolateSinebow, true);
-							break;
-					}
-					
-					
-					let vertexCount = geometry.attributes.position.count;
-					let arrayBuffer = new ArrayBuffer(vertexCount * 16); // create a generic buffer of binary data (a single particle has 16 bytes of data)
-					let interleavedFloat32Buffer = new Float32Array(arrayBuffer);// the typed arrays share the same buffer
-					let interleavedUint8Buffer = new Uint8Array(arrayBuffer);
-					
-					let color = new THREE.Color();
-					for (let i = 0; i < interleavedFloat32Buffer.length; i += 4) {
-						
-						let vertex = i / 4;
-						color = colors[vertex];
-
-						let j = (i + 3) * 4;
-						interleavedUint8Buffer[ j + 0 ] = color.r * 255; interleavedUint8Buffer[ j + 1 ] = color.g * 255; interleavedUint8Buffer[ j + 2 ] = color.b * 255;
-					}
-
-					let interleavedBuffer32 = new THREE.InterleavedBuffer(interleavedFloat32Buffer, 4), interleavedBuffer8 = new THREE.InterleavedBuffer(interleavedUint8Buffer, 16);
-					geometry.setAttribute('color', new THREE.InterleavedBufferAttribute(interleavedBuffer8, 3, 12, true));
-					
-					scene.add(mesh);
-					cameraFocalPoint = gfx.movePoint(mesh.position, new THREE.Vector3(0, 50, 0));
-				},
-				function (xhr) { // in progress
-				},
-				function (error) { // on failure
-					console.log('Error loadModel(): ', error);
-				}
-			);
-		},
-		
-		d3Stripes: function(geometry, colorScheme) {
-			let self = this;
-			let colors = [];
-			let vertexCount = geometry.attributes.position.count;
-			for (let i = 0; i < vertexCount; i++) {
-				let interpolator = (i/(vertexCount - 1));
-				// console.log(Math.floor(interpolator*10), colorScheme[Math.floor(interpolator*10)]);
-				colors[i] = self.hexStringToColor(colorScheme[i%colorScheme.length]);
-			}
-			return colors;
-		},
-		
 		interpolateD3Colors: function(geometry, color1, color2, interpolatorFunc, reverse) {
 			let self = this;
 			reverse = reverse || false;
@@ -359,73 +234,9 @@ module.exports = function() {
 			return colors;
 		},
 		
-		interpolateColors: function(geometry, color1, color2, reverse) {
-			let self = this;
-			reverse = reverse || false;
-			let colors = [];
-			let vertexCount = geometry.attributes.position.count;
-			for (let i = 0; i < vertexCount; i++) {
-				let interpolator = (i/(vertexCount - 1));
-				colors[i] = color1.clone().lerp(color2, interpolator);
-			}
-			if (reverse) colors.reverse();
-			return colors;
-		},
-		
 		rgbStringToColor: function(rgbString) {
 			rgbString = rgbString.replace('rgb(','').replace(')','').replace(' ','').split(',');
 			return new THREE.Color(rgbString[0]/255, rgbString[1]/255, rgbString[2]/255);
-		},
-		
-		hexStringToColor: function(hexString) {
-			return new THREE.Color().set(hexString);
-		},
-		
-		addGrid: function(size, worldColor, gridColor) {
-				
-			let zBuff = gfx.appSettings.zBuffer;
-			var planeGeometry = new THREE.PlaneBufferGeometry(size, size);
-			planeGeometry.rotateX(-Math.PI / 2);
-			var planeMaterial = new THREE.ShadowMaterial();
-
-			var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-			plane.position.y = -1;
-			plane.receiveShadow = true;
-			scene.add(plane);
-			var helper = new THREE.GridHelper(size, 20, gridColor, gridColor);
-			helper.material.opacity = .75;
-			helper.material.transparent = true;
-			helper.position.set(zBuff, 0, -zBuff);
-			scene.add(helper);
-			
-			let wall = new THREE.GridHelper(size, 20, gridColor, gridColor);
-			wall.material.opacity = .75;
-			wall.material.transparent = true;
-			
-			let left = wall.clone();
-			left.rotation.x = Math.PI/2;
-			left.position.set(0, size/2, -size/2 - zBuff);
-			scene.add(left);
-			let right = helper.clone();
-			right.rotation.set(Math.PI/2, 0, Math.PI/2);
-			right.position.set(size/2, size/2, -zBuff);
-			scene.add(right);
-			
-			let white = 0xffffff;
-			bottomLeft = new THREE.Vector3(-size/2, 0, -size/2), nearestCorner = new THREE.Vector3(-size/2, 0, size/2);
-			gfx.drawLineFromPoints(bottomLeft, new THREE.Vector3(-size/2, size, -size/2), white, .5);
-			gfx.drawLineFromPoints(bottomLeft, new THREE.Vector3(-size/2, 0, size/2), white, .5);
-			gfx.drawLineFromPoints(new THREE.Vector3(-size/2, 0, size/2), new THREE.Vector3(size/2, 0, size/2), white, .5);
-
-			scene.background = worldColor;
-			//scene.fog = new THREE.FogExp2(new THREE.Color('black'), 0.002);
-			
-			return plane;
-		},
-
-		
-		ramp: function(color, index, total) { // pass a color interpolator or array of colors. will return a color based on percentage index / total
-			return color(index / (total - 1));
 		},
 		
 		startMusic: function() {
