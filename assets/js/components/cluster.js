@@ -86,7 +86,7 @@ module.exports = function() {
 			
 			if (!initialized) self.firstFrame();
 			// camera trajectory
-			this.updateCamera2();
+			this.updateCamera();
 			if (clusterGeometry) {
 				
 				for (let i = 0; i < clusterGeometry.vertices.length; i++) {
@@ -100,18 +100,6 @@ module.exports = function() {
 				clusterGeometry.verticesNeedUpdate = true;
 			}
 			frameCount++;
-		},
-		
-		updateCamera: function() {
-			dt = clock.getDelta();
-			clock.start();
-			
-			let curveIndex = Math.round(trajectory_iteration_count * progress);
-			
-			camera.position.set(curve[curveIndex].x, curve[curveIndex].y, curve[curveIndex].z);
-			camera.lookAt(cameraFocalPoint);
-			progress += dt * camera_speed;
-			if (progress > (1-(dt * camera_speed))) progress = 0;
 		},
 		
 		createCameraTrajectory: function() {
@@ -156,7 +144,7 @@ module.exports = function() {
 			scene.add(curveObject);
 		},
 		
-		updateCamera2: function() {
+		updateCamera: function() {
 			dt = clock.getDelta();
 			clock.start();
 	
@@ -450,7 +438,13 @@ module.exports = function() {
 				volume: .5
 			});
 			
-			console.log(sound);
+			let timer = setInterval(function() { // Browsers are really bitchy about autoplay, so set up an interval to repeatedly start play until it actually does
+				
+				if (sound._state == "loaded") {
+					sound.play();
+					clearInterval(timer);
+				}
+			 }, 50);
 		}
 	}
 }

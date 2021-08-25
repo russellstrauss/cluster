@@ -95,7 +95,7 @@ module.exports = function () {
       var self = this;
       if (!initialized) self.firstFrame(); // camera trajectory
 
-      this.updateCamera2();
+      this.updateCamera();
 
       if (clusterGeometry) {
         for (var i = 0; i < clusterGeometry.vertices.length; i++) {
@@ -111,15 +111,6 @@ module.exports = function () {
       }
 
       frameCount++;
-    },
-    updateCamera: function updateCamera() {
-      dt = clock.getDelta();
-      clock.start();
-      var curveIndex = Math.round(trajectory_iteration_count * progress);
-      camera.position.set(curve[curveIndex].x, curve[curveIndex].y, curve[curveIndex].z);
-      camera.lookAt(cameraFocalPoint);
-      progress += dt * camera_speed;
-      if (progress > 1 - dt * camera_speed) progress = 0;
     },
     createCameraTrajectory: function createCameraTrajectory() {
       var curve_length = trajectory_iteration_count;
@@ -158,7 +149,7 @@ module.exports = function () {
       curveObject = new THREE.Line(geometry, material);
       scene.add(curveObject);
     },
-    updateCamera2: function updateCamera2() {
+    updateCamera: function updateCamera() {
       dt = clock.getDelta();
       clock.start();
       var cameraPosition = catmullRomCurve.getPointAt(progress);
@@ -438,7 +429,13 @@ module.exports = function () {
         preload: true,
         volume: .5
       });
-      console.log(sound);
+      var timer = setInterval(function () {
+        // Browsers are really bitchy about autoplay, so set up an interval to repeatedly start play until it actually does
+        if (sound._state == "loaded") {
+          sound.play();
+          clearInterval(timer);
+        }
+      }, 50);
     }
   };
 };
